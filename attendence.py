@@ -361,6 +361,8 @@ total_label = tk.Label(
     font=("Arial", 14, "bold")
 )
 
+# Attendance management module
+
 total_label.pack(
     side=tk.LEFT,
     padx=10
