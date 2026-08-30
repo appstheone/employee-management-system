@@ -1,139 +1,80 @@
 # Employee Management System
 
-A Python-based desktop Employee Management System built with Tkinter.
+A desktop-based Employee Management System developed using Python and Tkinter.
 
 The application provides employee management, role-based authentication,
-secure password hashing, backup and restore, reporting, charts,
-attendance management, import/export functionality, and activity logging.
+attendance management, dashboard statistics, charts, backup and restore,
+user management, and activity logging.
 
 ---
 
-## 🚀 Features
+## Features
 
-### 🔐 Authentication & Security
-
+### Authentication & Security
+- Secure login system
 - Admin and Employee roles
-- Secure password hashing using PBKDF2-HMAC-SHA256
-- 600,000 PBKDF2 iterations
-- Password verification
-- Password change functionality
+- Password hashing using PBKDF2-HMAC-SHA256
 - Role-based access control
-- Login protection against repeated failed attempts
+- Change password functionality
 
----
-
-### 👥 Employee Management
-
-Admin users can:
-
+### Employee Management
 - Add employees
-- Update employees
+- Update employee information
 - Delete employees
 - Search employees
-- Refresh employee data
-- View employee information
-- Manage employee records
+- View employee details
 
-Employee users have restricted access based on their role.
+### Dashboard
+- Total employees
+- IT employees
+- HR employees
+- Total salary
+- Average salary
+- Employees by domain chart
+- Salary chart
 
----
+### Attendance Management
+- Admin-only attendance management
+- Select employee
+- Mark Present, Absent, or Leave
+- Check-in time
+- Check-out time
+- Date validation
+- Duplicate attendance prevention
+- Search attendance records
+- Delete attendance records
+- Attendance data stored locally
 
-### 📊 Dashboard
+### User Management
+- Manage application users
+- Admin and Employee roles
+- Secure password storage
 
-The dashboard provides information such as:
-
-- Total Employees
-- IT Employees
-- HR Employees
-- Total Salary
-- Average Salary
-
----
-
-### 📈 Charts & Analytics
-
-The system provides graphical information including:
-
-- Employees by Domain
-- Salary statistics
-- Employee reports
-- Domain-wise analysis
-- Role-wise analysis
-- Project-wise analysis
-
----
-
-### 💾 Backup & Restore
-
-The application provides data protection through:
-
-- Automatic backup before Add
-- Automatic backup before Update
-- Automatic backup before Delete
-- Manual backup
-- Backup management
-- Restore functionality
-- Undo functionality
+### Data Management
+- Backup employee data
+- Restore employee data
+- CSV-based data storage
+- Activity logging
 
 ---
 
-### 📥 Import & Export
-
-Supported functionality includes:
-
-- Import employee data
-- Export employee data
-- CSV support
-- Excel XLSX support
-
----
-
-### 📝 Activity Logging
-
-Important application activities can be recorded, including:
-
-- Login
-- Logout
-- Add employee
-- Update employee
-- Delete employee
-- User management
-- Password changes
-- Backup operations
-- Restore operations
-
----
-
-### ⚙️ Settings
-
-The application provides configurable application settings.
-
----
-
-### ⌨️ Keyboard Shortcuts
-
-Keyboard shortcuts are available for commonly used operations.
-
----
-
-## 🛠️ Technologies Used
+## Technologies Used
 
 - Python
 - Tkinter
 - CSV
 - JSON
 - Matplotlib
-- OpenPyXL
 - PBKDF2-HMAC-SHA256
 - Git
 - GitHub
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
-employee_management_system/
+employee-management-system/
 │
 ├── backups/
 │   └── .gitkeep
@@ -142,16 +83,14 @@ employee_management_system/
 │   └── .gitkeep
 │
 ├── activity_log.csv
-├── attendance.py
+├── attendence.py
 ├── auth.py
 ├── employee.csv
 ├── gui.py
 ├── login.py
 ├── main.py
 │
-├── users.json
 ├── users.example.json
-│
 ├── requirements.txt
 ├── README.md
 └── .gitignore
