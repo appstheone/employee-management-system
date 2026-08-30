@@ -8,8 +8,7 @@ import subprocess
 import shutil
 from datetime import datetime
 
-from auth import hash_password, verify_password
-
+from attendence import open_attendance_window
 
 # ============================================================
 # OPTIONAL EXCEL SUPPORT
@@ -1103,9 +1102,9 @@ class EmployeeManagementSystem:
 
             tk.Button(
                 button_frame,
-                text="Activity Log",
-                width=14,
-                command=self.activity_log_window
+                text="Attendance",
+                width=13,
+                command=self.open_attendance
             ).pack(
                 side="left",
                 padx=3
@@ -1113,9 +1112,9 @@ class EmployeeManagementSystem:
 
             tk.Button(
                 button_frame,
-                text="Reports & Analytics",
-                width=18,
-                command=self.reports_analytics
+                text="Activity Log",
+                width=14,
+                command=self.activity_log_window
             ).pack(
                 side="left",
                 padx=3
@@ -1230,6 +1229,12 @@ class EmployeeManagementSystem:
             self.shortcut_activity_log
         )
 
+        # Attendance shortcut
+        self.root.bind(
+            "<Control-Shift-a>",
+            self.shortcut_attendance
+        )
+
     # ========================================================
     # SHORTCUT METHODS
     # ========================================================
@@ -1327,6 +1332,23 @@ class EmployeeManagementSystem:
         if self.role == "ADMIN":
 
             self.activity_log_window()
+
+        return "break"
+
+    def shortcut_attendance(
+        self,
+        event=None
+    ):
+
+        if self.role == "ADMIN":
+
+            self.open_attendance()
+        else:
+
+            messagebox.showwarning(
+                "Access Denied",
+                "Only administrators can manage attendance."
+            )
 
         return "break"
 
@@ -2679,6 +2701,36 @@ class EmployeeManagementSystem:
         plt.tight_layout()
 
         plt.show()
+
+    # ========================================================
+    # ATTENDANCE
+    # ========================================================
+
+    def open_attendance(self):
+
+        if self.role != "ADMIN":
+
+            messagebox.showerror(
+                "Access Denied",
+                "Only administrators can manage attendance."
+            )
+
+            return
+
+        log_activity(
+            self.username,
+            self.role,
+            "OPEN ATTENDANCE",
+            "Opened Attendance Management"
+        )
+
+        open_attendance_window(
+            self.root,
+            self.employees,
+            self.username,
+            self.role,
+            log_activity
+        )
 
     # ========================================================
     # BACKUP DATA
@@ -4231,194 +4283,6 @@ class EmployeeManagementSystem:
         refresh_logs()
 
     # ========================================================
-    # REPORTS & ANALYTICS
-    # ========================================================
-
-    def reports_analytics(self):
-
-        if self.role != "ADMIN":
-
-            messagebox.showerror(
-                "Access Denied",
-                "Only administrators can view reports and analytics."
-            )
-            return
-
-        if not self.employees:
-
-            messagebox.showinfo(
-                "Reports & Analytics",
-                "No employee data available."
-            )
-            return
-
-        total = len(self.employees)
-        total_salary = 0.0
-        salaries = []
-        domains = {}
-        roles = {}
-        projects = {}
-
-        for employee in self.employees:
-            domain = str(employee.get("Domain", "Unknown")).strip() or "Unknown"
-            role = str(employee.get("Role", "Unknown")).strip() or "Unknown"
-            project = str(employee.get("Project Name", "Unknown")).strip() or "Unknown"
-
-            domains[domain] = domains.get(domain, 0) + 1
-            roles[role] = roles.get(role, 0) + 1
-            projects[project] = projects.get(project, 0) + 1
-
-            try:
-                salary = float(str(employee.get("Salary", "0")).replace(",", "").replace("₹", "").strip())
-                total_salary += salary
-                salaries.append((salary, str(employee.get("Name", "Unknown"))))
-            except (ValueError, TypeError):
-                pass
-
-        average = total_salary / len(salaries) if salaries else 0
-        highest = max(salaries, key=lambda x: x[0]) if salaries else (0, "N/A")
-        lowest = min(salaries, key=lambda x: x[0]) if salaries else (0, "N/A")
-
-        window = tk.Toplevel(self.root)
-        window.title("Reports & Analytics")
-        window.geometry("850x700")
-        window.transient(self.root)
-
-        tk.Label(
-            window,
-            text="EMPLOYEE REPORTS & ANALYTICS",
-            font=("Arial", 20, "bold")
-        ).pack(pady=20)
-
-        summary = tk.Frame(window)
-        summary.pack(fill="x", padx=25, pady=10)
-
-        metrics = [
-            ("Total Employees", f"{total}"),
-            ("Total Salary", f"₹{total_salary:,.0f}"),
-            ("Average Salary", f"₹{average:,.0f}"),
-            ("Highest Salary", f"₹{highest[0]:,.0f}"),
-            ("Lowest Salary", f"₹{lowest[0]:,.0f}")
-        ]
-
-        for index, (label, value) in enumerate(metrics):
-            frame = tk.LabelFrame(summary, text=label, padx=12, pady=8)
-            frame.grid(row=0, column=index, padx=5, sticky="nsew")
-            tk.Label(frame, text=value, font=("Arial", 13, "bold")).pack()
-            summary.columnconfigure(index, weight=1)
-
-        tk.Label(
-            window,
-            text=f"Highest Paid: {highest[1]}    |    Lowest Paid: {lowest[1]}",
-            font=("Arial", 11, "bold")
-        ).pack(pady=8)
-
-        notebook = ttk.Notebook(window)
-        notebook.pack(fill="both", expand=True, padx=25, pady=10)
-
-        def add_table(title, data, columns):
-            frame = tk.Frame(notebook)
-            notebook.add(frame, text=title)
-            tree = ttk.Treeview(frame, columns=columns, show="headings")
-            for col in columns:
-                tree.heading(col, text=col)
-                tree.column(col, width=300, anchor="center")
-            tree.pack(side="left", fill="both", expand=True)
-            scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
-            scrollbar.pack(side="right", fill="y")
-            tree.configure(yscrollcommand=scrollbar.set)
-            for key, value in sorted(data.items(), key=lambda x: (-x[1], str(x[0]).lower())):
-                tree.insert("", "end", values=(key, value))
-
-        add_table("By Domain", domains, ("Domain", "Employees"))
-        add_table("By Role", roles, ("Role", "Employees"))
-        add_table("By Project", projects, ("Project", "Employees"))
-
-        button_frame = tk.Frame(window)
-        button_frame.pack(fill="x", padx=25, pady=15)
-
-        def export_summary():
-            filename = filedialog.asksaveasfilename(
-                parent=window,
-                title="Export Analytics Summary",
-                defaultextension=".csv",
-                filetypes=[("CSV Files", "*.csv"), ("Excel Files", "*.xlsx"), ("All Files", "*.*")],
-                initialfile="employee_analytics_" + datetime.now().strftime("%Y%m%d_%H%M%S") + ".csv"
-            )
-            if not filename:
-                return
-
-            try:
-                if filename.lower().endswith(".xlsx"):
-                    if not OPENPYXL_AVAILABLE:
-                        messagebox.showerror("Missing Package", "openpyxl is not installed.\\n\\nRun:\npip install openpyxl", parent=window)
-                        return
-                    workbook = Workbook()
-                    sheet = workbook.active
-                    sheet.title = "Analytics"
-                    rows = [
-                        ("Metric", "Value"),
-                        ("Total Employees", total),
-                        ("Total Salary", total_salary),
-                        ("Average Salary", average),
-                        ("Highest Salary", highest[0]),
-                        ("Highest Paid Employee", highest[1]),
-                        ("Lowest Salary", lowest[0]),
-                        ("Lowest Paid Employee", lowest[1])
-                    ]
-                    for row in rows:
-                        sheet.append(row)
-                    sheet.append([])
-                    sheet.append(("Domain", "Employees"))
-                    for key, value in domains.items():
-                        sheet.append((key, value))
-                    workbook.save(filename)
-                else:
-                    with open(filename, "w", newline="", encoding="utf-8-sig") as file:
-                        writer = csv.writer(file)
-                        writer.writerow(["Metric", "Value"])
-                        writer.writerow(["Total Employees", total])
-                        writer.writerow(["Total Salary", f"₹{total_salary:,.0f}"])
-                        writer.writerow(["Average Salary", f"₹{average:,.0f}"])
-                        writer.writerow(["Highest Salary", f"₹{highest[0]:,.0f}"])
-                        writer.writerow(["Highest Paid Employee", highest[1]])
-                        writer.writerow(["Lowest Salary", f"₹{lowest[0]:,.0f}"])
-                        writer.writerow(["Lowest Paid Employee", lowest[1]])
-                        writer.writerow([])
-                        writer.writerow(["Domain", "Employees"])
-                        for key, value in domains.items():
-                            writer.writerow([key, value])
-
-                log_activity(self.username, self.role, "EXPORT ANALYTICS", f"Exported analytics report: {filename}")
-                messagebox.showinfo("Export Successful", "Analytics report exported successfully.", parent=window)
-
-            except Exception as error:
-                messagebox.showerror("Export Error", f"Could not export analytics report.\n\n{error}", parent=window)
-
-        tk.Button(
-            button_frame,
-            text="Export Analytics",
-            width=18,
-            command=export_summary
-        ).pack(side="left", padx=5)
-
-        tk.Button(
-            button_frame,
-            text="Close",
-            width=15,
-            command=window.destroy
-        ).pack(side="right", padx=5)
-
-        window.bind("<Escape>", lambda event: window.destroy())
-
-        log_activity(
-            self.username,
-            self.role,
-            "VIEW ANALYTICS",
-            "Opened Reports & Analytics"
-        )
-
-    # ========================================================
     # EXPORT REPORT
     # ========================================================
 
@@ -4810,7 +4674,7 @@ class EmployeeManagementSystem:
                 role = "EMPLOYEE"
 
             users[username] = {
-                "password_hash": hash_password(password),
+                "password": password,
                 "role": role
             }
 
@@ -4943,49 +4807,41 @@ class EmployeeManagementSystem:
 
             return
 
-        user_data = users[self.username]
+        user_data = users[
+            self.username
+        ]
 
-        if not isinstance(user_data, dict):
+        if isinstance(
+            user_data,
+            dict
+        ):
 
-            messagebox.showerror(
-                "Security Error",
-                "This user account has an invalid password format.\n\n"
-                "Please recreate the account from Manage Users."
+            current_password = str(
+                user_data.get(
+                    "password",
+                    ""
+                )
             )
 
-            return
+        else:
 
-        current_hash = str(
-            user_data.get(
-                "password_hash",
-                ""
-            )
-        )
-
-        if not current_hash:
-
-            messagebox.showerror(
-                "Security Error",
-                "This account does not have a password hash.\n\n"
-                "Please recreate the account from Manage Users."
+            current_password = str(
+                user_data
             )
 
-            return
-
-        old_password = simpledialog.askstring(
-            "Change Password",
-            "Current password:",
-            show="*",
-            parent=self.root
+        old_password = (
+            simpledialog.askstring(
+                "Change Password",
+                "Current password:",
+                show="*",
+                parent=self.root
+            )
         )
 
         if old_password is None:
             return
 
-        if not verify_password(
-            old_password,
-            current_hash
-        ):
+        if old_password != current_password:
 
             messagebox.showerror(
                 "Error",
@@ -4994,21 +4850,25 @@ class EmployeeManagementSystem:
 
             return
 
-        new_password = simpledialog.askstring(
-            "Change Password",
-            "New password:",
-            show="*",
-            parent=self.root
+        new_password = (
+            simpledialog.askstring(
+                "Change Password",
+                "New password:",
+                show="*",
+                parent=self.root
+            )
         )
 
         if not new_password:
             return
 
-        confirm_password = simpledialog.askstring(
-            "Change Password",
-            "Confirm new password:",
-            show="*",
-            parent=self.root
+        confirm_password = (
+            simpledialog.askstring(
+                "Change Password",
+                "Confirm new password:",
+                show="*",
+                parent=self.root
+            )
         )
 
         if new_password != confirm_password:
@@ -5020,20 +4880,30 @@ class EmployeeManagementSystem:
 
             return
 
-        if len(new_password) < 6:
+        if isinstance(
+            user_data,
+            dict
+        ):
 
-            messagebox.showwarning(
-                "Weak Password",
-                "Password must contain at least 6 characters."
-            )
+            user_data[
+                "password"
+            ] = new_password
 
-            return
+        else:
 
-        user_data[
-            "password_hash"
-        ] = hash_password(new_password)
+            users[
+                self.username
+            ] = {
+                "password":
+                    new_password,
 
-        if save_users(users):
+                "role":
+                    self.role
+            }
+
+        if save_users(
+            users
+        ):
 
             log_activity(
                 self.username,
