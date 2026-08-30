@@ -1,0 +1,10 @@
+{
+    "admin": {
+        "password": "REPLACE_WITH_PBKDF2_HASH",
+        "role": "ADMIN"
+    },
+    "employee": {
+        "password": "REPLACE_WITH_PBKDF2_HASH",
+        "role": "EMPLOYEE"
+    }
+}
