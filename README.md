@@ -94,3 +94,36 @@ employee-management-system/
 ├── requirements.txt
 ├── README.md
 └── .gitignore
+
+
+---
+
+## Screenshots
+
+### Login
+
+![Login Screen](screenshots/login.png)
+
+### Admin Dashboard
+
+![Admin Dashboard](screenshots/dashboard.png)
+
+### Employee Management
+
+![Employee Management](screenshots/employees.png)
+
+### Charts
+
+![Charts](screenshots/charts.png)
+
+### Attendance Management
+
+![Attendance Management](screenshots/attendance.png)
+
+### User Management
+
+![User Management](screenshots/users.png)
+
+### Backup and Restore
+
+![Backup and Restore](screenshots/backup.png)
