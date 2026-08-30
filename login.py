@@ -35,7 +35,7 @@ GUI_FILE = os.path.join(
 
 HASH_ALGORITHM = "sha256"
 
-PBKDF2_ITERATIONS = 310000
+PBKDF2_ITERATIONS = 600000
 
 SALT_LENGTH = 32
 
@@ -252,8 +252,6 @@ def save_users(users):
                 indent=4
             )
 
-        # Replace original file only after
-        # successful write.
         os.replace(
             temp_file,
             USERS_FILE
@@ -305,7 +303,7 @@ def normalize_role(role):
 
 
 # ============================================================
-# VERIFY PASSWORD
+# PASSWORD MATCHING
 # ============================================================
 
 def password_matches(
@@ -313,10 +311,15 @@ def password_matches(
     stored_password
 ):
     """
-    Supports both:
+    Verify the entered password.
 
-    1. Existing plain-text passwords
-    2. New PBKDF2 hashed passwords
+    Supports:
+
+    1. PBKDF2 hashed passwords
+    2. Old plain-text passwords
+
+    Plain-text support is retained only for
+    compatibility with older user records.
     """
 
     stored_password = str(
@@ -338,8 +341,6 @@ def password_matches(
 
     # --------------------------------------------------------
     # OLD PLAIN-TEXT PASSWORD
-    #
-    # Used only for migration.
     # --------------------------------------------------------
 
     return hmac.compare_digest(
@@ -349,7 +350,7 @@ def password_matches(
 
 
 # ============================================================
-# MIGRATE PASSWORD
+# MIGRATE OLD PASSWORD
 # ============================================================
 
 def migrate_password(
@@ -358,7 +359,7 @@ def migrate_password(
     old_password
 ):
     """
-    Convert an old plain-text password to
+    Convert an old plain-text password into
     PBKDF2 after successful login.
     """
 
@@ -396,14 +397,19 @@ def migrate_password(
                 )
             ):
 
-                user["password"] = hash_password(
+                user["password_hash"] = hash_password(
                     old_password
+                )
+
+                user.pop(
+                    "password",
+                    None
                 )
 
                 changed = True
 
         # ====================================================
-        # DICTIONARY WITH USER LIST
+        # DICTIONARY WITH USERS LIST
         # ====================================================
 
         user_list = users.get(
@@ -447,8 +453,13 @@ def migrate_password(
                     )
                 ):
 
-                    item["password"] = hash_password(
+                    item["password_hash"] = hash_password(
                         old_password
+                    )
+
+                    item.pop(
+                        "password",
+                        None
                     )
 
                     changed = True
@@ -496,8 +507,13 @@ def migrate_password(
                 )
             ):
 
-                item["password"] = hash_password(
+                item["password_hash"] = hash_password(
                     old_password
+                )
+
+                item.pop(
+                    "password",
+                    None
                 )
 
                 changed = True
@@ -520,7 +536,7 @@ def find_user(
     username
 ):
     """
-    Find user information from all supported
+    Find user information from supported
     users.json formats.
 
     Returns:
@@ -530,7 +546,7 @@ def find_user(
             "role": "ADMIN"
         }
 
-    or None
+    or None.
     """
 
     # ========================================================
@@ -558,8 +574,11 @@ def find_user(
             return {
                 "password": str(
                     user.get(
-                        "password",
-                        ""
+                        "password_hash",
+                        user.get(
+                            "password",
+                            ""
+                        )
                     )
                 ),
                 "role": normalize_role(
@@ -603,8 +622,11 @@ def find_user(
                     return {
                         "password": str(
                             item.get(
-                                "password",
-                                ""
+                                "password_hash",
+                                item.get(
+                                    "password",
+                                    ""
+                                )
                             )
                         ),
                         "role": normalize_role(
@@ -644,8 +666,11 @@ def find_user(
                 return {
                     "password": str(
                         item.get(
-                            "password",
-                            ""
+                            "password_hash",
+                            item.get(
+                                "password",
+                                ""
+                            )
                         )
                     ),
                     "role": normalize_role(
@@ -782,7 +807,7 @@ def check_login(
     locked_until = 0
 
     # ========================================================
-    # MIGRATE OLD PASSWORD
+    # MIGRATE OLD PASSWORD IF NECESSARY
     # ========================================================
 
     if not is_password_hashed(
