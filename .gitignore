@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# VS Code
+.vscode/
+
+# Windows
+desktop.ini
+Thumbs.db
+
+# Application data
+users.json
+settings.json
+
+# Generated backups
+backups/*
+!backups/.gitkeep
+
+# Generated exports
+exports/*
+
+# Logs
+*.log
